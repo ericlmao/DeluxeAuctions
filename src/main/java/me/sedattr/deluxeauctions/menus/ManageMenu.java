@@ -185,7 +185,7 @@ public class ManageMenu {
                 return;
 
             this.gui.setItem(claimSection.getInt("slot"), ClickableItem.of(itemStack, (event) -> {
-                this.player.closeInventory();
+                me.sedattr.deluxeauctions.others.TaskUtils.run(this.player, this.player::closeInventory);
                 playerAuction.collectAuctions(this.player);
             }));
         }

@@ -84,7 +84,8 @@ public class Auction {
         }
 
         this.auctionItem = item;
-        this.auctionOwnerDisplayName = !player.getDisplayName().isEmpty() ? player.getDisplayName() : player.getName();
+        String displayName = Utils.getDisplayName(player);
+        this.auctionOwnerDisplayName = !displayName.isEmpty() ? displayName : player.getName();
         this.auctionOwner = player.getUniqueId();
 
         AuctionCreateEvent event = new AuctionCreateEvent(player, this);

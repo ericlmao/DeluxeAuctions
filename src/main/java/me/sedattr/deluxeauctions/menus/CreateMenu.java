@@ -10,8 +10,10 @@ import me.sedattr.deluxeauctions.inventoryapi.item.ClickableItem;
 import me.sedattr.deluxeauctions.managers.Auction;
 import me.sedattr.deluxeauctions.managers.AuctionType;
 import me.sedattr.deluxeauctions.managers.PlayerPreferences;
+import me.sedattr.deluxeauctions.others.AdventureText;
 import me.sedattr.deluxeauctions.others.PlaceholderUtil;
 import me.sedattr.deluxeauctions.others.Utils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -146,7 +148,7 @@ public class CreateMenu implements MenuManager {
                 .addPlaceholder("%auction_price%", this.playerAuction.getCreateEconomy().getText().replace("%price%", DeluxeAuctions.getInstance().numberFormat.format(this.playerAuction.getCreatePrice())))
                 .addPlaceholder("%item_displayname%", Utils.getDisplayName(this.createItem))
                 .addPlaceholder("%item_name%", Utils.strip(Utils.getDisplayName(this.createItem)))
-                .addPlaceholder("%player_displayname%", this.player.getDisplayName())
+                .addPlaceholder("%player_displayname%", Utils.getDisplayName(this.player))
                 .addPlaceholder("%player_name%", this.player.getName())
                 .addPlaceholder("%auction_time%", DeluxeAuctions.getInstance().timeFormat.formatTime(this.playerAuction.getCreateTime(), "other_times"));
 
@@ -219,27 +221,27 @@ public class CreateMenu implements MenuManager {
 
             String displayName = exampleSection.getString("name");
             if (displayName != null)
-                meta.setDisplayName(Utils.colorize(displayName
+                meta.displayName(AdventureText.component(displayName
                     .replace("%item_name%", Utils.getDisplayName(this.createItem))));
 
             List<String> lore = exampleSection.getStringList("lore");
-            List<String> newLore = new ArrayList<>();
+            List<Component> newLore = new ArrayList<>();
             if (!lore.isEmpty())
                 for (String line : lore) {
                     if (line.contains("%item_lore%")) {
-                        List<String> itemLore = meta.getLore();
+                        List<Component> itemLore = meta.lore();
                         if (itemLore != null && !itemLore.isEmpty())
                             newLore.addAll(itemLore);
 
                         continue;
                     }
 
-                    newLore.add(Utils.colorize(line
+                    newLore.add(AdventureText.component(line
                             .replace("%item_name%", Utils.getDisplayName(this.createItem))
                     ));
                 }
 
-            meta.setLore(newLore);
+            meta.lore(newLore);
             example.setItemMeta(meta);
 
             int slot = exampleSection.getInt("slot");

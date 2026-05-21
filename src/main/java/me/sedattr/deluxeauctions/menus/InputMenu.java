@@ -91,7 +91,7 @@ public class InputMenu {
     private void chatInput(Player player, MenuManager menuManager) {
         String textType = menuManager.getClass().equals(AuctionsMenu.class) ? "text" : "number";
 
-        player.closeInventory();
+        me.sedattr.deluxeauctions.others.TaskUtils.run(player, player::closeInventory);
         Utils.sendMessage(player, "input_lines.chat." + textType);
 
         new ChatInput(player, menuManager::inputResult);

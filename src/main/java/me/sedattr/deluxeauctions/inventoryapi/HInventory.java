@@ -4,8 +4,11 @@ import lombok.Getter;
 import java.util.HashMap;
 import java.util.List;
 
+import me.sedattr.deluxeauctions.others.AdventureText;
+import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.inventoryapi.inventory.InventoryVariables;
 import me.sedattr.deluxeauctions.inventoryapi.item.ClickableItem;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -27,26 +30,31 @@ public class HInventory implements InventoryHolder {
         this.id = id;
         this.closeable = closeable;
 
+        Component titleComponent = AdventureText.component(title);
         if (inventoryType.equals(InventoryType.CHEST))
-            this.bukkitInventory = Bukkit.createInventory(this, size * 9, title);
+            this.bukkitInventory = Bukkit.createInventory(this, size * 9, titleComponent);
         else
-            this.bukkitInventory = Bukkit.createInventory(this, inventoryType, title);
+            this.bukkitInventory = Bukkit.createInventory(this, inventoryType, titleComponent);
     }
 
     public void open(final Player player) {
         if (player == null)
             return;
 
-        player.openInventory(this.bukkitInventory);
-        InventoryVariables.addPlayerInventory(player, this);
+        TaskUtils.run(player, () -> {
+            player.openInventory(this.bukkitInventory);
+            InventoryVariables.addPlayerInventory(player, this);
+        });
     }
 
     public void close(Player player) {
         if (player == null)
             return;
 
-        this.closeable = true;
-        player.closeInventory();
+        TaskUtils.run(player, () -> {
+            this.closeable = true;
+            player.closeInventory();
+        });
     }
 
     public @NotNull Inventory getInventory() {

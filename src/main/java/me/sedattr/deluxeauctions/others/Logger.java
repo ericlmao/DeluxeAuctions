@@ -11,7 +11,7 @@ public class Logger {
             return;
         level = level == null ? LogLevel.INFO : level;
 
-        Bukkit.getConsoleSender().sendMessage(Utils.colorize(getPrefix() + " " + level.getPrefix() + " " + level.getColor() + message
+        Bukkit.getConsoleSender().sendMessage(AdventureText.component(getPrefix() + " " + level.getPrefix() + " " + level.getColor() + message
                 .replace("%prefix%", getPrefix())
                 .replace("%level_prefix%", level.getPrefix())
                 .replace("%level_color%", level.getColor())));

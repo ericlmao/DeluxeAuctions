@@ -6,6 +6,7 @@ import me.sedattr.deluxeauctions.inventoryapi.item.ClickableItem;
 import me.sedattr.deluxeauctions.DeluxeAuctions;
 import me.sedattr.deluxeauctions.managers.Category;
 import me.sedattr.deluxeauctions.others.PlaceholderUtil;
+import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -56,20 +57,21 @@ public class MenuHandler {
 
                 for (String command : commands) {
                     command = command
-                            .replace("%player_displayname%", player.getDisplayName())
+                            .replace("%player_displayname%", Utils.getDisplayName(player))
                             .replace("%player_name%", player.getName())
                             .replace("%player_uuid%", String.valueOf(player.getUniqueId()));
 
-                    if (command.startsWith("[close]"))
-                        player.closeInventory();
-                    else if (command.startsWith("[player]"))
-                        player.performCommand(command
+                    String parsedCommand = command;
+                    if (parsedCommand.startsWith("[close]"))
+                        TaskUtils.run(player, player::closeInventory);
+                    else if (parsedCommand.startsWith("[player]"))
+                        TaskUtils.run(player, () -> player.performCommand(parsedCommand
                                 .replace("[player] ", "")
-                                .replace("[player]", ""));
+                                .replace("[player]", "")));
                     else
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command
+                        TaskUtils.run(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedCommand
                                 .replace("[console] ", "")
-                                .replace("[console]", ""));
+                                .replace("[console]", "")));
                 }
             }));
     }
@@ -78,7 +80,7 @@ public class MenuHandler {
         int closeSlot = section.getInt("close");
         ItemStack close = DeluxeAuctions.getInstance().normalItems.get("close");
         if (closeSlot > 0 && close != null)
-            gui.setItem(closeSlot, ClickableItem.of(close, (event) -> player.closeInventory()));
+            gui.setItem(closeSlot, ClickableItem.of(close, (event) -> TaskUtils.run(player, player::closeInventory)));
 
         List<Integer> glassSlots = section.getIntegerList("glass");
         ItemStack glass = category != null ? category.getGlass() : DeluxeAuctions.getInstance().normalItems.get("glass");
@@ -103,7 +105,7 @@ public class MenuHandler {
         int closeSlot = section.getInt("close");
         ItemStack close = DeluxeAuctions.getInstance().normalItems.get("close");
         if (closeSlot > 0 && close != null)
-            gui.setItem(closeSlot, ClickableItem.of(close, (event) -> player.closeInventory()));
+            gui.setItem(closeSlot, ClickableItem.of(close, (event) -> TaskUtils.run(player, player::closeInventory)));
     }
 
     public HInventory createInventory(Player player, ConfigurationSection section, String type, PlaceholderUtil placeholderUtil) {
@@ -132,7 +134,7 @@ public class MenuHandler {
         }
 
         HInventory gui = InventoryAPI.getInventoryManager()
-                .setTitle(Utils.colorize(title.length() > 32 ? title.substring(0, 29) + "..." : title))
+                .setTitle(title.length() > 32 ? title.substring(0, 29) + "..." : title)
                 .setSize(size)
                 .setId(type)
                 .create();
