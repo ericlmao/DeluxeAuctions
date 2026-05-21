@@ -243,7 +243,7 @@ public class AuctionCommand implements CommandExecutor, TabCompleter {
                     try {
                         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
 
-                        new ViewAuctionsMenu(player, target).open(1);
+                        new ViewAuctionsMenu(player, target.getUniqueId(), args[1]).open(1);
                     } catch (Exception ee) {
                         Utils.sendMessage(player, "view_usage", placeholderUtil);
                         return false;

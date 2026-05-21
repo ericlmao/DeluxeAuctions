@@ -10,7 +10,6 @@ import me.sedattr.deluxeauctions.managers.*;
 import me.sedattr.deluxeauctions.others.PlaceholderUtil;
 import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -18,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ViewAuctionsMenu {
     private final ConfigurationSection section;
@@ -26,11 +26,17 @@ public class ViewAuctionsMenu {
     private List<Auction> auctions = List.of();
     private int page;
     private final Player player;
-    private final OfflinePlayer target;
+    private final UUID target;
+    private final String targetName;
 
-    public ViewAuctionsMenu(Player player, OfflinePlayer target) {
+    public ViewAuctionsMenu(Player player, Player target) {
+        this(player, target.getUniqueId(), target.getName());
+    }
+
+    public ViewAuctionsMenu(Player player, UUID target, String targetName) {
         this.player = player;
         this.target = target;
+        this.targetName = targetName;
         this.section = DeluxeAuctions.getInstance().menusFile.getConfigurationSection("view_player_auctions");
     }
 
@@ -38,7 +44,7 @@ public class ViewAuctionsMenu {
         this.page = page;
 
         List<Auction> newAuctions = new ArrayList<>();
-        List<Auction> auctions = AuctionCache.getOwnedAuctions(this.target.getUniqueId());
+        List<Auction> auctions = AuctionCache.getOwnedAuctions(this.target);
         for (Auction auction : auctions) {
             if (auction.isEnded())
                 continue;
@@ -53,7 +59,7 @@ public class ViewAuctionsMenu {
 
         this.auctions = newAuctions;
         PlaceholderUtil placeholderUtil = new PlaceholderUtil()
-                .addPlaceholder("%player_name%", this.target.getName())
+                .addPlaceholder("%player_name%", getTargetName())
                 .addPlaceholder("%current_page%", String.valueOf(page))
                 .addPlaceholder("%total_page%", String.valueOf(getTotalPage()));
 
@@ -92,6 +98,16 @@ public class ViewAuctionsMenu {
         updateItems();
     }
 
+    private String getTargetName() {
+        if (this.targetName != null && !this.targetName.isEmpty())
+            return this.targetName;
+
+        if (!this.auctions.isEmpty())
+            return this.auctions.getFirst().getAuctionOwnerName();
+
+        return "";
+    }
+
     private int getTotalPage() {
         List<Integer> slots = this.section.getIntegerList("slots");
 
@@ -125,9 +141,9 @@ public class ViewAuctionsMenu {
             int slot = i >= slots.size() ? 0 : slots.get(i);
             this.gui.setItem(slot, ClickableItem.of(itemStack, (event) -> {
                 if (auction.getAuctionType().equals(AuctionType.BIN))
-                    new BinViewMenu(this.player, auction).open(this.target.getUniqueId().toString());
+                    new BinViewMenu(this.player, auction).open(this.target.toString());
                 else
-                    new NormalViewMenu(this.player, auction).open(this.target.getUniqueId().toString());
+                    new NormalViewMenu(this.player, auction).open(this.target.toString());
             }));
 
             i++;
