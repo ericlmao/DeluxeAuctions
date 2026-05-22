@@ -67,7 +67,6 @@ public class DeluxeAuctions extends JavaPlugin {
     public InputMenu inputMenu;
 
     public boolean placeholderApi = false;
-    public EcoItemsAddon ecoItemsAddon;
     public MultiServerManager multiServerManager;
     public HeadDatabase headDatabase;
     public DiscordWebhook discordWebhook;
@@ -181,11 +180,6 @@ public class DeluxeAuctions extends JavaPlugin {
             Bukkit.getPluginManager().registerEvents(this.headDatabase, this);
 
             Logger.sendConsoleMessage("Enabled &fHeadDatabase %level_color%support!", Logger.LogLevel.INFO);
-        }
-
-        if (Bukkit.getPluginManager().isPluginEnabled("EcoItems")) {
-            this.ecoItemsAddon = new EcoItemsAddon();
-            Logger.sendConsoleMessage("Enabled &fEcoItems %level_color%support!", Logger.LogLevel.INFO);
         }
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {

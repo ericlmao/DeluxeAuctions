@@ -37,12 +37,6 @@ public class Economy {
 
                 this.manager = new CoinsEngineEconomy(DeluxeAuctions.getInstance().configFile.getString("economy.coinsengine_settings.currency_name", "coins"));
                 break;
-            case "ed_prison":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("EdPrison"))
-                    break;
-
-                this.manager = new EdPrisonEconomy(DeluxeAuctions.getInstance().configFile.getString("economy.edprison_settings.currency_name", "tokens"));
-                break;
             case "lands":
                 if (!Bukkit.getServer().getPluginManager().isPluginEnabled("Lands"))
                     break;
@@ -55,29 +49,11 @@ public class Economy {
 
                 this.manager = new PlayerPointsEconomy();
                 break;
-            case "royaleeconomy_balance":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("RoyaleEconomy"))
-                    break;
-
-                this.manager = new RoyaleEconomyBalance();
-                break;
-            case "royaleeconomy_bank":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("RoyaleEconomy"))
-                    break;
-
-                this.manager = new RoyaleEconomyBank();
-                break;
             case "skript":
                 if (!Bukkit.getServer().getPluginManager().isPluginEnabled("Skript"))
                     break;
 
                 this.manager = new SkriptEconomy(DeluxeAuctions.getInstance().configFile.getString("economy.skript_settings.currency_name"));
-                break;
-            case "token_manager":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("TokenManager"))
-                    break;
-
-                this.manager = new TokenManagerEconomy();
                 break;
             case "ultra_economy":
                 if (!Bukkit.getServer().getPluginManager().isPluginEnabled("UltraEconomy"))
@@ -115,16 +91,10 @@ public class Economy {
 
         switch (this.type) {
             case "coins_engine":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("EdPrison"))
+                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("CoinsEngine"))
                     break;
 
                 this.manager = new CoinsEngineEconomy(section.getString("coinsengine_currency", "coins"));
-                break;
-            case "ed_prison":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("EdPrison"))
-                    break;
-
-                this.manager = new EdPrisonEconomy(section.getString("edprison_currency", "tokens"));
                 break;
             case "item":
                 this.manager = new ItemEconomy(section.getString("item_currency", "DIAMOND"));
@@ -144,29 +114,11 @@ public class Economy {
 
                 this.manager = new PlayerPointsEconomy();
                 break;
-            case "royaleeconomy_balance":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("RoyaleEconomy"))
-                    break;
-
-                this.manager = new RoyaleEconomyBalance();
-                break;
-            case "royaleeconomy_bank":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("RoyaleEconomy"))
-                    break;
-
-                this.manager = new RoyaleEconomyBank();
-                break;
             case "skript":
                 if (!Bukkit.getServer().getPluginManager().isPluginEnabled("Skript"))
                     break;
 
                 this.manager = new SkriptEconomy(section.getString("skript_currency"));
-                break;
-            case "token_manager":
-                if (!Bukkit.getServer().getPluginManager().isPluginEnabled("TokenManager"))
-                    break;
-
-                this.manager = new TokenManagerEconomy();
                 break;
             case "ultra_economy":
                 if (!Bukkit.getServer().getPluginManager().isPluginEnabled("UltraEconomy"))

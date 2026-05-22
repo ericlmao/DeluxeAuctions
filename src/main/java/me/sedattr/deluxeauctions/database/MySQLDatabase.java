@@ -2,14 +2,13 @@ package me.sedattr.deluxeauctions.database;
 
 import me.sedattr.deluxeauctions.DeluxeAuctions;
 import me.sedattr.deluxeauctions.addons.multiserver.BungeeAddon;
-import me.sedattr.deluxeauctions.addons.multiserver.RedisAddon;
 import me.sedattr.auctionsapi.cache.AuctionCache;
 import me.sedattr.auctionsapi.cache.PlayerCache;
+import me.sedattr.auctionsapi.cache.PlayerNameCache;
 import me.sedattr.deluxeauctions.managers.*;
 import me.sedattr.deluxeauctions.others.Logger;
 import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
-import me.sedattr.deluxeauctionsredis.RedisPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
@@ -29,9 +28,17 @@ public class MySQLDatabase implements DatabaseManager {
     private String items;
     private String stats;
 
+    private String getOptionalString(ResultSet set, String column) throws SQLException {
+        try {
+            return set.getString(column);
+        } catch (SQLException ignored) {
+            return null;
+        }
+    }
+
     private void load(ResultSet set) throws SQLException {
-        long endTime = set.getLong(7);
-        String auctionUUID = set.getString(1);
+        long endTime = set.getLong("end_time");
+        String auctionUUID = set.getString("uuid");
         UUID uuid = UUID.fromString(auctionUUID);
 
         long daysTime = DeluxeAuctions.getInstance().configFile.getInt("settings.purge_auctions", 0) * 86400L;
@@ -44,16 +51,19 @@ public class MySQLDatabase implements DatabaseManager {
             }
         }
 
-        UUID owner = UUID.fromString(set.getString(2));
-        String displayName = set.getString(3);
+        UUID owner = UUID.fromString(set.getString("owner"));
+        String displayName = set.getString("display_name");
+        String ownerName = getOptionalString(set, "owner_name");
+        if (ownerName == null || ownerName.isEmpty())
+            ownerName = PlayerNameCache.resolveName(owner, displayName);
 
-        ItemStack item = Utils.itemFromBase64(set.getString(4));
-        double price = set.getDouble(6);
-        AuctionType type = AuctionType.valueOf(set.getString(8));
-        boolean isClaimed = set.getBoolean(9);
-        String economy = set.getString(10);
+        ItemStack item = Utils.itemFromBase64(set.getString("item"));
+        double price = set.getDouble("price");
+        AuctionType type = AuctionType.valueOf(set.getString("type"));
+        boolean isClaimed = set.getBoolean("claimed");
+        String economy = set.getString("economy");
 
-        Auction auction = new Auction(uuid, owner, displayName, item, price, type, economy, endTime, isClaimed);
+        Auction auction = new Auction(uuid, owner, ownerName, displayName, item, price, type, economy, endTime, isClaimed);
         if (auction.getAuctionCategory().isEmpty()) {
             AuctionCache.removeUpdatingAuction(uuid);
             return;
@@ -72,7 +82,7 @@ public class MySQLDatabase implements DatabaseManager {
          * }
          */
 
-        String bids = set.getString(5);
+        String bids = set.getString("bids");
         if (bids != null) {
             List<PlayerBid> playerBids = new ArrayList<>();
 
@@ -84,13 +94,26 @@ public class MySQLDatabase implements DatabaseManager {
 
                 UUID orderUUID = UUID.fromString(newArgs[0]);
                 UUID ownerUUID = UUID.fromString(newArgs[1]);
-                String ownerDisplayName = newArgs[2];
-                double bidPrice = Double.parseDouble(newArgs[3]);
-                long bidTime = Long.parseLong(newArgs[4]);
-                boolean collected = !type.equals(AuctionType.NORMAL) || Boolean.parseBoolean(newArgs[5]);
+                String bidOwnerName;
+                String ownerDisplayName;
+                double bidPrice;
+                long bidTime;
+                boolean collected;
+                if (newArgs.length >= 7) {
+                    bidOwnerName = newArgs[2];
+                    ownerDisplayName = newArgs[3];
+                    bidPrice = Double.parseDouble(newArgs[4]);
+                    bidTime = Long.parseLong(newArgs[5]);
+                    collected = !type.equals(AuctionType.NORMAL) || Boolean.parseBoolean(newArgs[6]);
+                } else {
+                    ownerDisplayName = newArgs[2];
+                    bidOwnerName = PlayerNameCache.resolveName(ownerUUID, ownerDisplayName);
+                    bidPrice = Double.parseDouble(newArgs[3]);
+                    bidTime = Long.parseLong(newArgs[4]);
+                    collected = !type.equals(AuctionType.NORMAL) || Boolean.parseBoolean(newArgs[5]);
+                }
 
-                PlayerBid playerBid = new PlayerBid(orderUUID, ownerUUID, ownerDisplayName, bidPrice, bidTime,
-                        collected);
+                PlayerBid playerBid = new PlayerBid(orderUUID, ownerUUID, bidOwnerName, ownerDisplayName, bidPrice, bidTime, collected);
                 playerBids.add(playerBid);
             }
 
@@ -143,6 +166,7 @@ public class MySQLDatabase implements DatabaseManager {
                         .prepareStatement("CREATE TABLE IF NOT EXISTS " + this.auctions + " (" +
                                 "uuid VARCHAR(36) PRIMARY KEY, " +
                                 "owner VARCHAR(36), " +
+                                "owner_name TEXT, " +
                                 "display_name TEXT, " +
                                 "item MEDIUMTEXT, " +
                                 "bids MEDIUMTEXT, " +
@@ -175,6 +199,24 @@ public class MySQLDatabase implements DatabaseManager {
             statement3.execute();
         } catch (SQLException x) {
             x.printStackTrace();
+        }
+
+        try (Connection connection = getConnection();
+                PreparedStatement checkColumn = connection
+                        .prepareStatement("SHOW COLUMNS FROM " + this.auctions + " LIKE 'owner_name';");
+                ResultSet resultSet = checkColumn.executeQuery()) {
+
+            if (!resultSet.next()) {
+                try (PreparedStatement addColumn = connection
+                        .prepareStatement("ALTER TABLE " + this.auctions + " ADD COLUMN owner_name TEXT;")) {
+                    addColumn.executeUpdate();
+                    DeluxeAuctions.getInstance().dataHandler
+                            .debug("Column 'owner_name' has been added to " + this.auctions + " table.");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         try (Connection connection = getConnection();
@@ -280,15 +322,7 @@ public class MySQLDatabase implements DatabaseManager {
             return;
 
         DeluxeAuctions.getInstance().loaded = true;
-        if (Bukkit.getPluginManager().isPluginEnabled("DeluxeAuctionsRedis")) {
-            me.sedattr.deluxeauctionsredis.RedisPlugin redis = (RedisPlugin) Bukkit.getPluginManager()
-                    .getPlugin("DeluxeAuctionsRedis");
-            if (redis != null && redis.isLoaded()) {
-                DeluxeAuctions.getInstance().multiServerManager = new RedisAddon();
-                Logger.sendConsoleMessage("Enabled &fDeluxeAuctions Redis %level_color%support!",
-                        Logger.LogLevel.INFO);
-            }
-        } else if (DeluxeAuctions.getInstance().configFile.getBoolean("addons.bungeecord", false)) {
+        if (DeluxeAuctions.getInstance().configFile.getBoolean("addons.bungeecord", false)) {
             DeluxeAuctions.getInstance().multiServerManager = new BungeeAddon();
             Logger.sendConsoleMessage("Enabled &fDeluxeAuctions Bungee %level_color%support!",
                     Logger.LogLevel.INFO);
@@ -379,7 +413,7 @@ public class MySQLDatabase implements DatabaseManager {
     // SAVE FUNCTIONS
     public void saveAuctions() {
         String sql = "REPLACE INTO " + this.auctions
-                + " (uuid, owner, display_name, item, bids, price, end_time, type, claimed, economy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+                + " (uuid, owner, owner_name, display_name, item, bids, price, end_time, type, claimed, economy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
         runTask(() -> {
             try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
                 int i = 0;
@@ -399,14 +433,15 @@ public class MySQLDatabase implements DatabaseManager {
 
                     statement.setString(1, auction.getAuctionUUID().toString());
                     statement.setString(2, auction.getAuctionOwner().toString());
-                    statement.setString(3, auction.getAuctionOwnerDisplayName());
-                    statement.setString(4, Utils.itemToBase64(auction.getAuctionItem()));
-                    statement.setString(5, playerBids.toString());
-                    statement.setDouble(6, auction.getAuctionPrice());
-                    statement.setLong(7, auction.getAuctionEndTime());
-                    statement.setString(8, auction.getAuctionType().name());
-                    statement.setBoolean(9, auction.isSellerClaimed());
-                    statement.setString(10, auction.getEconomy().getKey());
+                    statement.setString(3, auction.getAuctionOwnerName());
+                    statement.setString(4, auction.getAuctionOwnerDisplayName());
+                    statement.setString(5, Utils.itemToBase64(auction.getAuctionItem()));
+                    statement.setString(6, playerBids.toString());
+                    statement.setDouble(7, auction.getAuctionPrice());
+                    statement.setLong(8, auction.getAuctionEndTime());
+                    statement.setString(9, auction.getAuctionType().name());
+                    statement.setBoolean(10, auction.isSellerClaimed());
+                    statement.setString(11, auction.getEconomy().getKey());
 
                     statement.execute();
                     i++;
@@ -423,7 +458,7 @@ public class MySQLDatabase implements DatabaseManager {
 
     public void saveAuction(Auction auction) {
         String sql = "REPLACE INTO " + this.auctions
-                + " (uuid, owner, display_name, item, bids, price, end_time, type, claimed, economy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " (uuid, owner, owner_name, display_name, item, bids, price, end_time, type, claimed, economy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         runTask(() -> {
             StringBuilder playerBids = new StringBuilder();
             List<PlayerBid> bids = auction.getAuctionBids().getPlayerBids();
@@ -440,14 +475,15 @@ public class MySQLDatabase implements DatabaseManager {
             try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
                 statement.setString(1, auction.getAuctionUUID().toString());
                 statement.setString(2, auction.getAuctionOwner().toString());
-                statement.setString(3, auction.getAuctionOwnerDisplayName());
-                statement.setString(4, Utils.itemToBase64(auction.getAuctionItem()));
-                statement.setString(5, playerBids.toString());
-                statement.setDouble(6, auction.getAuctionPrice());
-                statement.setLong(7, auction.getAuctionEndTime());
-                statement.setString(8, auction.getAuctionType().name());
-                statement.setBoolean(9, auction.isSellerClaimed());
-                statement.setString(10, auction.getEconomy().getKey());
+                statement.setString(3, auction.getAuctionOwnerName());
+                statement.setString(4, auction.getAuctionOwnerDisplayName());
+                statement.setString(5, Utils.itemToBase64(auction.getAuctionItem()));
+                statement.setString(6, playerBids.toString());
+                statement.setDouble(7, auction.getAuctionPrice());
+                statement.setLong(8, auction.getAuctionEndTime());
+                statement.setString(9, auction.getAuctionType().name());
+                statement.setBoolean(10, auction.isSellerClaimed());
+                statement.setString(11, auction.getEconomy().getKey());
 
                 statement.execute();
 

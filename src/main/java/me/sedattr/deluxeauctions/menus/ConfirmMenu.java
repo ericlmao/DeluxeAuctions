@@ -11,7 +11,6 @@ import me.sedattr.deluxeauctions.others.PlaceholderUtil;
 import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -151,16 +150,16 @@ public class ConfirmMenu {
                             Utils.playSound(this.player, "bought_auction");
                             Utils.sendMessage(this.player, "bought", placeholderUtil);
 
-                            OfflinePlayer seller = Bukkit.getOfflinePlayer(this.auction.getAuctionOwner());
+                            Player seller = Bukkit.getPlayer(this.auction.getAuctionOwner());
                             placeholderUtil
                                     .addPlaceholder("%buyer_displayname%", Utils.getDisplayName(this.player))
                                     .addPlaceholder("%buyer_name%", this.player.getName())
-                                    .addPlaceholder("%seller_displayname%", seller.getPlayer() != null ? Utils.getDisplayName(seller.getPlayer()) : "?")
-                                    .addPlaceholder("%seller_name%", seller.getName());
+                                    .addPlaceholder("%seller_displayname%", seller != null ? Utils.getDisplayName(seller) : this.auction.getAuctionOwnerDisplayName())
+                                    .addPlaceholder("%seller_name%", this.auction.getAuctionOwnerName());
 
-                            if (seller.getPlayer() != null && seller.isOnline()) {
-                                Utils.playSound(seller.getPlayer(), "sold_auction");
-                                Utils.broadcastMessage(seller.getPlayer(), "sold", placeholderUtil
+                            if (seller != null) {
+                                Utils.playSound(seller, "sold_auction");
+                                Utils.broadcastMessage(seller, "sold", placeholderUtil
                                         .addPlaceholder("%auction_uuid%", String.valueOf(this.auction.getAuctionUUID())));
                             }
 
@@ -189,19 +188,19 @@ public class ConfirmMenu {
                                     .addPlaceholder("%auction_uuid%", String.valueOf(this.auction.getAuctionUUID()));
 
                             for (PlayerBid playerBid : this.auction.getAuctionBids().getHighestPlayerBids()) {
-                                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerBid.getBidOwner());
-                                if (!offlinePlayer.isOnline())
+                                Player onlinePlayer = Bukkit.getPlayer(playerBid.getBidOwner());
+                                if (onlinePlayer == null)
                                     continue;
-                                if (offlinePlayer.getUniqueId().equals(this.player.getUniqueId()))
+                                if (onlinePlayer.getUniqueId().equals(this.player.getUniqueId()))
                                     continue;
 
-                                Utils.broadcastMessage(offlinePlayer.getPlayer(), "outbid", placeholderUtil
+                                Utils.broadcastMessage(onlinePlayer, "outbid", placeholderUtil
                                         .addPlaceholder("%outbid_price%", auction.getEconomy().getText().replace("%price%", DeluxeAuctions.getInstance().numberFormat.format(this.price-playerBid.getBidPrice()))));
                             }
 
                             Player seller = Bukkit.getPlayer(this.auction.getAuctionOwner());
                             placeholderUtil
-                                    .addPlaceholder("%seller_name%", seller != null ? seller.getName() : "?");
+                                    .addPlaceholder("%seller_name%", seller != null ? seller.getName() : this.auction.getAuctionOwnerName());
 
                             if (DeluxeAuctions.getInstance().discordWebhook != null)
                                 DeluxeAuctions.getInstance().discordWebhook.sendMessage("bid_item", placeholderUtil);

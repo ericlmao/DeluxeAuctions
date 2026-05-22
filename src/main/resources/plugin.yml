@@ -12,26 +12,22 @@ softdepend:
   - Vault
   - CoinsEngine
   - HeadDatabase
-  - RoyaleEconomy
   - PlaceholderAPI
   - PlayerPoints
-  - TokenManager
   - Lands
   - UltraEconomy
   - LiteBans
   - AdvancedBan
-  - EcoItems
-  - eco
-  - libreforge
-  - AuctionMaster
-  - zAuctionHouseV3
-  - DeluxeAuctionsRedis
   - DeluxeAuctionsDisplay
-  - EdPrison
   - Skript
 loadbefore:
-  - AuctionMaster
-  - zAuctionHouseV3
   - DeluxeAuctionsDisplay
-  - DeluxeAuctionsRedis
   - CMI
+
+commands:
+  auction:
+    description: Default auction command.
+    aliases: [deluxeauctions, ah, auc]
+  auctionadmin:
+    description: Default auction admin command.
+    aliases: [deluxeauctionsadmin, ahadmin, aucadmin]

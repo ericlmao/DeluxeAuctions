@@ -28,6 +28,7 @@ public class Auction {
     private final Economy economy;
 
     private UUID auctionOwner;
+    private String auctionOwnerName;
     private String auctionOwnerDisplayName;
     private long auctionStartTime;
 
@@ -46,12 +47,17 @@ public class Auction {
     }
 
     public Auction(UUID uuid, UUID owner, String displayName, ItemStack item, Double price, AuctionType type, String economy, long end, boolean sellerClaimed) {
+        this(uuid, owner, displayName, displayName, item, price, type, economy, end, sellerClaimed);
+    }
+
+    public Auction(UUID uuid, UUID owner, String ownerName, String displayName, ItemStack item, Double price, AuctionType type, String economy, long end, boolean sellerClaimed) {
         this.auctionUUID = uuid;
         this.auctionPrice = price;
         this.auctionItem = item;    
         this.auctionType = type;
         this.auctionEndTime = end;
-        this.auctionOwnerDisplayName = displayName;
+        this.auctionOwnerName = ownerName != null && !ownerName.isEmpty() ? ownerName : displayName != null ? displayName : "";
+        this.auctionOwnerDisplayName = displayName != null && !displayName.isEmpty() ? displayName : this.auctionOwnerName;
         this.auctionOwner = owner;
         this.sellerClaimed = sellerClaimed;
         this.auctionCategory = CategoryCache.getItemCategory(item);
@@ -84,6 +90,7 @@ public class Auction {
         }
 
         this.auctionItem = item;
+        this.auctionOwnerName = player.getName();
         String displayName = Utils.getDisplayName(player);
         this.auctionOwnerDisplayName = !displayName.isEmpty() ? displayName : player.getName();
         this.auctionOwner = player.getUniqueId();
@@ -312,7 +319,7 @@ public class Auction {
         this.auctionEndTime += DeluxeAuctions.getInstance().configFile.getLong("settings.add_time_when_bid", 0);
 
         // Log
-        DeluxeAuctions.getInstance().dataHandler.writeToLog("[PLAYER BID AUCTION] " + player.getName() + " (" + player.getUniqueId() + ") bid " + price + " COINS for " + Bukkit.getOfflinePlayer(this.auctionOwner).getName() + "'s " + Utils.getDisplayName(this.auctionItem) + " (" + this.auctionUUID + ")!");
+        DeluxeAuctions.getInstance().dataHandler.writeToLog("[PLAYER BID AUCTION] " + player.getName() + " (" + player.getUniqueId() + ") bid " + price + " COINS for " + this.auctionOwnerName + "'s " + Utils.getDisplayName(this.auctionItem) + " (" + this.auctionUUID + ")!");
 
         // Refund previous highest bidder BEFORE charging new bidder
         PlayerBid highestBid = this.auctionBids.getHighestBid();
@@ -467,7 +474,7 @@ public class Auction {
         }
 
         // Log
-        DeluxeAuctions.getInstance().dataHandler.writeToLog("[PLAYER BOUGHT AUCTION] " + player.getName() + " (" + player.getUniqueId() + ") bought " + Utils.getDisplayName(this.auctionItem) + " (" + this.auctionUUID + ") for " + this.auctionPrice + " COINS from " + Bukkit.getOfflinePlayer(this.auctionOwner).getName() + "!");
+        DeluxeAuctions.getInstance().dataHandler.writeToLog("[PLAYER BOUGHT AUCTION] " + player.getName() + " (" + player.getUniqueId() + ") bought " + Utils.getDisplayName(this.auctionItem) + " (" + this.auctionUUID + ") for " + this.auctionPrice + " COINS from " + this.auctionOwnerName + "!");
 
         // Bid auctions
         PlayerBid playerBid = new PlayerBid(player, this.auctionPrice, true);

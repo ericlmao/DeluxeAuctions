@@ -14,7 +14,6 @@ import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -96,7 +95,7 @@ public class NormalViewMenu implements MenuManager {
             default -> {
                 if (!back.isEmpty()) {
                     UUID uuid = UUID.fromString(back);
-                    new ViewAuctionsMenu(this.player, Bukkit.getOfflinePlayer(uuid)).open(1);
+                    new ViewAuctionsMenu(this.player, uuid, null).open(1);
                 } else
                     new AuctionsMenu(this.player).open(playerAuction.getCategory().getName(), playerAuction.getPage());
             }
