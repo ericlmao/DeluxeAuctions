@@ -3,7 +3,6 @@ package me.sedattr.deluxeauctions.others;
 import com.google.common.collect.ImmutableMultimap;
 import me.sedattr.deluxeauctions.DeluxeAuctions;
 import net.kyori.adventure.text.Component;
-import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -23,8 +22,6 @@ import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Utils {
     private static String sanitizeForCommand(String input) {
@@ -76,8 +73,7 @@ public class Utils {
         if (text == null || text.isEmpty())
             return "";
 
-        text = Utils.colorize(text);
-        return ChatColor.stripColor(text);
+        return AdventureText.plain(text);
     }
 
     public static void changeName(ItemStack item, String name, PlaceholderUtil placeholderUtil) {
@@ -90,7 +86,7 @@ public class Utils {
         if (meta == null)
             return;
 
-        meta.setDisplayName(colorize(replacePlaceholders(name, placeholderUtil)));
+        meta.displayName(AdventureText.component(replacePlaceholders(name, placeholderUtil)));
 
         item.setItemMeta(meta);
     }
@@ -105,44 +101,19 @@ public class Utils {
         if (meta == null)
             return;
 
-        List<String> newLore = new ArrayList<>();
-
-        for (String line : lore)
-            newLore.add(Utils.colorize(replacePlaceholders(line, placeholderUtil)));
-
-        meta.setLore(newLore);
+        meta.lore(AdventureText.components(null, lore, placeholderUtil));
         item.setItemMeta(meta);
     }
 
     public static String hex(String message) {
-        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
-
-        Matcher matcher = pattern.matcher(message);
-        while (matcher.find()) {
-            String hexCode = message.substring(matcher.start(), matcher.end());
-            String replaceSharp = hexCode.replace('#', 'x');
-
-            char[] ch = replaceSharp.toCharArray();
-            StringBuilder builder = new StringBuilder();
-            for (char c : ch) {
-                builder.append("&").append(c);
-            }
-
-            message = message.replace(hexCode, builder.toString());
-            matcher = pattern.matcher(message);
-        }
-
-        return ChatColor.translateAlternateColorCodes('&', message);
+        return AdventureText.legacy(message);
     }
 
     public static String colorize(String s) {
         if (s == null || s.isEmpty())
             return "";
 
-        if (DeluxeAuctions.getInstance().version < 16)
-            return ChatColor.translateAlternateColorCodes('&', s);
-
-        return hex(s);
+        return AdventureText.legacy(s);
     }
 
     public static String itemToBase64(ItemStack item) {
@@ -274,7 +245,7 @@ public class Utils {
         if (sound == null)
             return;
 
-        player.playSound(player.getLocation(), sound, (float) section.getDouble("volume", 1.0), (float) section.getDouble("pitch", 1.0));
+        TaskUtils.run(player, () -> player.playSound(player.getLocation(), sound, (float) section.getDouble("volume", 1.0), (float) section.getDouble("pitch", 1.0)));
     }
 
     public static void broadcastMessage(Player player, String type, PlaceholderUtil placeholderUtil) {
@@ -300,15 +271,15 @@ public class Utils {
 
             for (String command : section.getStringList("commands")) {
                 String parsed = command
-                        .replace("%player_displayname%", sanitizeForCommand(player.getDisplayName()))
+                        .replace("%player_displayname%", sanitizeForCommand(Utils.getDisplayName(player)))
                         .replace("%player_name%", sanitizeForCommand(player.getName()))
                         .replace("%player_uuid%", String.valueOf(player.getUniqueId()));
 
-                TaskUtils.run(() -> {
+                TaskUtils.run(player, () -> {
                     if (parsed.startsWith("[player]"))
                         player.performCommand(parsed.replace("[player]", "").trim());
                     else
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsed.replace("[console]", "").trim());
+                        TaskUtils.run(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsed.replace("[console]", "").trim()));
                 });
             }
 
@@ -325,10 +296,10 @@ public class Utils {
             String hover = section.getString(type + ".hover");
             String clickType = section.getString(type + ".type", "SUGGEST_COMMAND");
 
-            Component base = Component.text(Utils.colorize(Utils.replacePlaceholders(message, placeholderUtil)));
+            Component base = AdventureText.component(player, message, placeholderUtil);
 
             if (hover != null && !hover.isEmpty()) {
-                Component hoverComp = Component.text(Utils.colorize(Utils.replacePlaceholders(hover, placeholderUtil)));
+                Component hoverComp = AdventureText.component(player, hover, placeholderUtil);
                 base = base.hoverEvent(HoverEvent.showText(hoverComp));
             }
 
@@ -374,10 +345,10 @@ public class Utils {
             if (message.isEmpty())
                 return false;
 
-            player.sendMessage(placeholderApi(player, colorize(replacePlaceholders(message, placeholderUtil))));
+            player.sendMessage(AdventureText.component(player, message, placeholderUtil));
         } else
             for (String message : messageList)
-                player.sendMessage(placeholderApi(player, colorize(replacePlaceholders(message, placeholderUtil))));
+                player.sendMessage(AdventureText.component(player, message, placeholderUtil));
 
         return true;
     }
@@ -397,10 +368,10 @@ public class Utils {
             if (message.isEmpty())
                 return false;
 
-            player.sendMessage(placeholderApi(player, colorize(message)));
+            player.sendMessage(AdventureText.component(player, message, null));
         } else
             for (String message : messageList)
-                player.sendMessage(placeholderApi(player, colorize(message)));
+                player.sendMessage(AdventureText.component(player, message, null));
 
         return true;
     }
@@ -424,13 +395,13 @@ public class Utils {
         if (meta == null)
             return Collections.emptyList();
 
-        List<String> lore = meta.getLore();
+        List<Component> lore = meta.lore();
         if (lore == null || lore.isEmpty())
             return Collections.emptyList();
 
         List<String> newLore = new ArrayList<>(lore.size());
-        for (String line : lore)
-            newLore.add(Utils.colorize(line));
+        for (Component line : lore)
+            newLore.add(AdventureText.legacy(line));
 
         return newLore;
     }
@@ -444,6 +415,13 @@ public class Utils {
         return me.clip.placeholderapi.PlaceholderAPI.setPlaceholders((Player) player, message);
     }
 
+    public static String getDisplayName(Player player) {
+        if (player == null)
+            return "";
+
+        return AdventureText.legacy(player.displayName());
+    }
+
     public static String getDisplayName(ItemStack item) {
         if (item == null)
             return "";
@@ -452,11 +430,11 @@ public class Utils {
 
         ItemMeta meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName())
-            itemName = item.getItemMeta().getDisplayName();
+            itemName = AdventureText.legacy(meta.displayName());
         else
-            itemName = org.bukkit.ChatColor.WHITE + capitalize(item.getType().name()
+            itemName = AdventureText.legacy("&f" + capitalize(item.getType().name()
                     .replace("_ITEM", "")
-                    .replace("_", " "));
+                    .replace("_", " ")));
 
         return itemName;
     }
@@ -510,16 +488,11 @@ public class Utils {
 
         String name = section.getString("name");
         if (name != null && !section.getBoolean("disable_name"))
-            meta.setDisplayName(Utils.colorize(replacePlaceholders(name, placeholderUtil)));
+            meta.displayName(AdventureText.component(replacePlaceholders(name, placeholderUtil)));
 
         List<String> lore = section.getStringList("lore");
         if (!lore.isEmpty()) {
-            List<String> newLore = new ArrayList<>();
-
-            for (String line : lore)
-                newLore.add(Utils.colorize(replacePlaceholders(line, placeholderUtil)));
-
-            meta.setLore(newLore);
+            meta.lore(AdventureText.components(null, lore, placeholderUtil));
         }
 
         List<String> flags = section.getStringList("flags");

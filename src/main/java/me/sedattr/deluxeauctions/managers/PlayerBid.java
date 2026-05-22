@@ -2,6 +2,7 @@ package me.sedattr.deluxeauctions.managers;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -21,7 +22,8 @@ public class PlayerBid {
     public PlayerBid(Player player, double price) {
         this.uuid = UUID.randomUUID();
         this.bidOwner = player.getUniqueId();
-        this.bidOwnerDisplayName = !player.getDisplayName().equalsIgnoreCase("") ? player.getDisplayName() : player.getName();
+        String displayName = Utils.getDisplayName(player);
+        this.bidOwnerDisplayName = !displayName.isEmpty() ? displayName : player.getName();
         this.bidPrice = price;
         this.bidTime = ZonedDateTime.now().toInstant().getEpochSecond();
     }
@@ -29,7 +31,8 @@ public class PlayerBid {
     public PlayerBid(Player player, double price, boolean collected) {
         this.uuid = UUID.randomUUID();
         this.bidOwner = player.getUniqueId();
-        this.bidOwnerDisplayName = !player.getDisplayName().equalsIgnoreCase("") ? player.getDisplayName() : player.getName();
+        String displayName = Utils.getDisplayName(player);
+        this.bidOwnerDisplayName = !displayName.isEmpty() ? displayName : player.getName();
         this.bidPrice = price;
         this.bidTime = ZonedDateTime.now().toInstant().getEpochSecond();
         this.collected = collected;

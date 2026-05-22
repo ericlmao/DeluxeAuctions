@@ -25,13 +25,17 @@ import me.sedattr.deluxeauctions.managers.SortType;
 import me.sedattr.deluxeauctions.menus.InputMenu;
 import me.sedattr.deluxeauctions.others.*;
 import org.bukkit.Bukkit;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.incendo.cloud.annotations.AnnotationParser;
+import org.incendo.cloud.execution.ExecutionCoordinator;
+import org.incendo.cloud.paper.LegacyPaperCommandManager;
+import org.bukkit.command.CommandSender;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +80,7 @@ public class DeluxeAuctions extends JavaPlugin {
     public boolean disabled = false;
     public boolean converting = false;
     private Metrics metrics;
+    private LegacyPaperCommandManager<CommandSender> commandManager;
 
     public AuctionType auctionType;
     public SortType sortType;
@@ -89,13 +94,17 @@ public class DeluxeAuctions extends JavaPlugin {
     public void registerCommandsListeners() {
         Bukkit.getPluginManager().registerEvents(new PlayerListeners(), DeluxeAuctions.getInstance());
 
-        PluginCommand auction = getCommand("auction");
-        if (auction != null)
-            auction.setExecutor(new AuctionCommand());
+        try {
+            this.commandManager = LegacyPaperCommandManager.createNative(this, ExecutionCoordinator.simpleCoordinator());
+        } catch (Exception exception) {
+            Logger.sendConsoleMessage("Failed to initialize Cloud command manager: " + exception.getMessage(), Logger.LogLevel.ERROR);
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
 
-        PluginCommand auctionAdmin = getCommand("auctionadmin");
-        if (auctionAdmin != null)
-            auctionAdmin.setExecutor(new AuctionAdminCommand());
+        AnnotationParser<CommandSender> annotationParser = new AnnotationParser<>(this.commandManager, CommandSender.class);
+        annotationParser.parse(new AuctionCommand());
+        annotationParser.parse(new AuctionAdminCommand());
     }
 
     @Override
@@ -157,7 +166,7 @@ public class DeluxeAuctions extends JavaPlugin {
 
         for (Player player : Bukkit.getOnlinePlayers())
             if (InventoryAPI.hasInventory(player))
-                player.closeInventory();
+                TaskUtils.run(player, player::closeInventory);
 
         Logger.sendConsoleMessage("Plugin is disabled! &8(&7sedattr was here...&8)", Logger.LogLevel.WARN);
     }
@@ -210,7 +219,7 @@ public class DeluxeAuctions extends JavaPlugin {
         Bukkit.getServer().getOnlinePlayers().forEach(player -> {
             HInventory gui = InventoryAPI.getInventory(player);
             if (gui != null)
-                player.closeInventory();
+                TaskUtils.run(player, player::closeInventory);
         });
 
         reloadConfig();

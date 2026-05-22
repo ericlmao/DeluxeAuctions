@@ -137,7 +137,7 @@ public class NormalViewMenu implements MenuManager {
             return;
 
         this.gui.setItem(collectSection.getInt("slot"), ClickableItem.of(itemStack, (event) -> {
-            this.player.closeInventory();
+            me.sedattr.deluxeauctions.others.TaskUtils.run(this.player, this.player::closeInventory);
 
             String type = this.auction.buyerCollect(this.player, false);
             if (type.isEmpty())
@@ -181,7 +181,7 @@ public class NormalViewMenu implements MenuManager {
                 return;
 
             this.gui.setItem(collectSection.getInt("slot"), ClickableItem.of(itemStack, (event) -> {
-                this.player.closeInventory();
+                me.sedattr.deluxeauctions.others.TaskUtils.run(this.player, this.player::closeInventory);
 
                 String type = this.auction.sellerCollect(this.player, false);
                 if (type.isEmpty())
@@ -212,7 +212,7 @@ public class NormalViewMenu implements MenuManager {
 
             if (playerBid == null)
                 this.gui.setItem(cancelSection.getInt("slot"), ClickableItem.of(itemStack, (event) -> {
-                     this.player.closeInventory();
+                     me.sedattr.deluxeauctions.others.TaskUtils.run(this.player, this.player::closeInventory);
 
                     if (this.auction.cancel(this.player)) {
                         Utils.playSound(player, "cancel_auction");

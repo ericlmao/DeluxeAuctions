@@ -26,6 +26,10 @@
         <configuration>
           <relocations>
             <relocation>
+              <pattern>org.incendo.cloud</pattern>
+              <shadedPattern>me.sedattr.deluxeauctions.cloud</shadedPattern>
+            </relocation>
+            <relocation>
               <pattern>net.wesjd.anvilgui</pattern>
               <shadedPattern>me.sedattr.deluxeauctions.anvilgui</shadedPattern>
             </relocation>
@@ -40,6 +44,9 @@
               <excludeDefaults>false</excludeDefaults>
               <includes>
                 <include>net/wesjd/anvilgui/**</include>
+                <include>org/incendo/cloud/**</include>
+                <include>io/leangen/geantyref/**</include>
+                <include>com/mojang/brigadier/**</include>
               </includes>
             </filter>
           </filters>
@@ -103,9 +110,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>dev.folia</groupId>
-      <artifactId>folia-api</artifactId>
-      <version>1.20.1-R0.1-SNAPSHOT</version>
+      <groupId>io.papermc.paper</groupId>
+      <artifactId>paper-api</artifactId>
+      <version>1.21.8-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

@@ -118,7 +118,7 @@ public class BinViewMenu {
                 return;
 
             this.gui.setItem(collectSection.getInt("slot"), ClickableItem.of(itemStack, (event) -> {
-                this.player.closeInventory();
+                TaskUtils.run(this.player, this.player::closeInventory);
 
                 String type = this.auction.sellerCollect(this.player, false);
                 if (type.isEmpty())
@@ -143,7 +143,7 @@ public class BinViewMenu {
                 return;
 
             this.gui.setItem(cancelSection.getInt("slot"), ClickableItem.of(itemStack, (event) -> {
-                this.player.closeInventory();
+                TaskUtils.run(this.player, this.player::closeInventory);
 
                 if (this.auction.cancel(this.player)) {
                     Utils.playSound(player, "cancel_auction");

@@ -11,20 +11,24 @@ import me.sedattr.deluxeauctions.managers.Category;
 import me.sedattr.deluxeauctions.menus.*;
 import me.sedattr.deluxeauctions.others.Logger;
 import me.sedattr.deluxeauctions.others.PlaceholderUtil;
+import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.annotation.specifier.Greedy;
+import org.incendo.cloud.annotations.Argument;
+import org.incendo.cloud.annotations.Command;
+import org.incendo.cloud.annotations.Default;
+import org.incendo.cloud.annotations.suggestion.Suggestions;
+import org.incendo.cloud.context.CommandContext;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class AuctionAdminCommand implements CommandExecutor, TabCompleter {
+public class AuctionAdminCommand {
     private final HashMap<String, List<String>> args = new HashMap<>();
 
     public AuctionAdminCommand() {
@@ -44,7 +48,7 @@ public class AuctionAdminCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] args) {
+    public List<String> tabComplete(CommandSender commandSender, String[] args) {
         if (!Utils.hasPermission(commandSender, "admin_commands", "command"))
             return Collections.emptyList();
 
@@ -59,7 +63,17 @@ public class AuctionAdminCommand implements CommandExecutor, TabCompleter {
         return Collections.emptyList();
     }
 
-    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
+    @Command("auctionadmin|deluxeauctionsadmin|ahadmin|aucadmin [args]")
+    public void cloudCommand(CommandSender commandSender, @Argument(value = "args", suggestions = "auctionAdminArgs") @Greedy @Default("") String rawArgs) {
+        execute(commandSender, "auctionadmin", parseArgs(rawArgs));
+    }
+
+    @Suggestions("auctionAdminArgs")
+    public List<String> suggestions(CommandContext<CommandSender> context, String input) {
+        return tabComplete(context.sender(), parseSuggestionArgs(input));
+    }
+
+    public boolean execute(CommandSender commandSender, String label, String[] args) {
         if (!Utils.hasPermission(commandSender, "admin_commands", "command")) {
             Utils.sendMessage(commandSender, "no_permission");
             return false;
@@ -178,7 +192,7 @@ public class AuctionAdminCommand implements CommandExecutor, TabCompleter {
                 DeluxeAuctions.getInstance().locked = !DeluxeAuctions.getInstance().locked;
                 for (Player player : Bukkit.getOnlinePlayers())
                     if (!player.isOp() && InventoryAPI.hasInventory(player))
-                        player.closeInventory();
+                        TaskUtils.run(player, player::closeInventory);
 
                 Utils.sendMessage(commandSender, DeluxeAuctions.getInstance().locked ? "locked" : "unlocked");
                 return true;
@@ -252,5 +266,22 @@ public class AuctionAdminCommand implements CommandExecutor, TabCompleter {
 
         Utils.sendMessage(commandSender, "admin_usage", placeholderUtil);
         return false;
+    }
+
+    private String[] parseArgs(String rawArgs) {
+        if (rawArgs == null || rawArgs.isBlank())
+            return new String[0];
+
+        return rawArgs.trim().split("\\s+");
+    }
+
+    private String[] parseSuggestionArgs(String rawArgs) {
+        if (rawArgs == null || rawArgs.isBlank())
+            return new String[]{""};
+
+        if (rawArgs.endsWith(" "))
+            return (rawArgs + " ").split("\\s+");
+
+        return rawArgs.trim().split("\\s+");
     }
 }
