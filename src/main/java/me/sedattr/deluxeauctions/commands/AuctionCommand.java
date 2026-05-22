@@ -13,15 +13,21 @@ import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.*;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.incendo.cloud.annotation.specifier.Greedy;
+import org.incendo.cloud.annotations.Argument;
+import org.incendo.cloud.annotations.Command;
+import org.incendo.cloud.annotations.Default;
+import org.incendo.cloud.annotations.suggestion.Suggestions;
+import org.incendo.cloud.context.CommandContext;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 
-public class AuctionCommand implements CommandExecutor, TabCompleter {
+public class AuctionCommand {
     private final HashMap<Player, Long> commandCooldown = new HashMap<>();
 
     private final HashMap<String, List<String>> args = new HashMap<>();
@@ -47,16 +53,18 @@ public class AuctionCommand implements CommandExecutor, TabCompleter {
             this.args.put("bids", section.getStringList("bids"));
         }
 
-        Set<String> keys = section.getKeys(false);
-        for (String key : keys) {
-            if (key.equals("reload") || key.equals("cancel") || key.equals("lock") || key.equals("convert"))
-                continue;
+        if (section != null) {
+            Set<String> keys = section.getKeys(false);
+            for (String key : keys) {
+                if (key.equals("reload") || key.equals("cancel") || key.equals("lock") || key.equals("convert"))
+                    continue;
 
-            this.args.put(key, section.getStringList(key));
+                this.args.put(key, section.getStringList(key));
+            }
         }
     }
 
-    public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] args) {
+    public List<String> tabComplete(CommandSender commandSender, String[] args) {
         if (!Utils.hasPermission(commandSender, "player_commands", "command"))
             return Collections.emptyList();
 
@@ -78,7 +86,18 @@ public class AuctionCommand implements CommandExecutor, TabCompleter {
         return Collections.emptyList();
     }
 
-    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
+    @Command("auction|deluxeauctions|ah|auc [args]")
+    public void cloudCommand(CommandSender commandSender, @Argument(value = "args", suggestions = "auctionArgs") @Greedy @Default("") String rawArgs) {
+        String[] args = parseArgs(rawArgs);
+        execute(commandSender, "auction", args);
+    }
+
+    @Suggestions("auctionArgs")
+    public List<String> suggestions(CommandContext<CommandSender> context, String input) {
+        return tabComplete(context.sender(), parseSuggestionArgs(input));
+    }
+
+    public boolean execute(CommandSender commandSender, String label, String[] args) {
         if (!Utils.hasPermission(commandSender, "player_commands", "command")) {
             Utils.sendMessage(commandSender, "no_permission");
             return false;
@@ -133,7 +152,7 @@ public class AuctionCommand implements CommandExecutor, TabCompleter {
                                 "&8- &eCurrent Plugin Version: &fv" + DeluxeAuctions.getInstance().getDescription().getVersion()));
 
                 for (String line : lines)
-                    player.sendMessage(Utils.colorize(line));
+                    player.sendMessage(me.sedattr.deluxeauctions.others.AdventureText.component(line));
 
                 return true;
             }
@@ -386,5 +405,22 @@ public class AuctionCommand implements CommandExecutor, TabCompleter {
 
         Utils.sendMessage(player, "player_usage", placeholderUtil);
         return false;
+    }
+
+    private String[] parseArgs(String rawArgs) {
+        if (rawArgs == null || rawArgs.isBlank())
+            return new String[0];
+
+        return rawArgs.trim().split("\\s+");
+    }
+
+    private String[] parseSuggestionArgs(String rawArgs) {
+        if (rawArgs == null || rawArgs.isBlank())
+            return new String[]{""};
+
+        if (rawArgs.endsWith(" "))
+            return (rawArgs + " ").split("\\s+");
+
+        return rawArgs.trim().split("\\s+");
     }
 }

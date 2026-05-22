@@ -1,7 +1,9 @@
 package me.sedattr.deluxeauctions.handlers;
 
 import me.sedattr.deluxeauctions.DeluxeAuctions;
+import me.sedattr.deluxeauctions.others.AdventureText;
 import me.sedattr.deluxeauctions.others.Utils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -46,13 +48,13 @@ public class BlacklistHandler {
                 return true;
         }
 
-        List<String> lore = itemMeta.getLore();
+        List<Component> lore = itemMeta.lore();
         if (lore == null || lore.isEmpty())
             return false;
 
         Set<String> newLore = new HashSet<>(lore.size());
-        for (String line : lore)
-            newLore.add(Utils.colorize(line));
+        for (Component line : lore)
+            newLore.add(AdventureText.legacy(line));
 
         return this.blacklistedLores.contains(newLore);
     }

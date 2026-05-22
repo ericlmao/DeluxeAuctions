@@ -46,7 +46,7 @@ public class StatsMenu {
 
         PlaceholderUtil placeholderUtil = new PlaceholderUtil()
                 .addPlaceholder("%player_name%", this.player.getName())
-                .addPlaceholder("%player_displayname%", this.player.getDisplayName());
+                .addPlaceholder("%player_displayname%", me.sedattr.deluxeauctions.others.Utils.getDisplayName(this.player));
 
         if (this.playerStats != null)
             placeholderUtil
@@ -78,7 +78,7 @@ public class StatsMenu {
 
         PlaceholderUtil placeholderUtil = new PlaceholderUtil()
                 .addPlaceholder("%player_name%", this.player.getName())
-                .addPlaceholder("%player_displayname%", this.player.getDisplayName());
+                .addPlaceholder("%player_displayname%", me.sedattr.deluxeauctions.others.Utils.getDisplayName(this.player));
 
         if (this.playerStats != null)
             placeholderUtil

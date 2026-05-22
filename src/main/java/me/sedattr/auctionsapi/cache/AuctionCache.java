@@ -3,6 +3,7 @@ package me.sedattr.auctionsapi.cache;
 import lombok.Getter;
 import me.sedattr.deluxeauctions.DeluxeAuctions;
 import me.sedattr.deluxeauctions.managers.*;
+import me.sedattr.deluxeauctions.others.AdventureText;
 import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -108,7 +109,7 @@ public class AuctionCache {
                 if (line != null && !line.isEmpty()) {
                     line = Utils.colorize(line);
 
-                    List<String> lore = meta.getLore();
+                    List<String> lore = Utils.getLore(itemStack);
                     if (lore == null || lore.isEmpty())
                         return;
 
@@ -135,8 +136,8 @@ public class AuctionCache {
                 }
 
                 if (meta != null) {
-                    if (meta.getDisplayName() != null) {
-                        if (Utils.strip(meta.getDisplayName().toLowerCase(Locale.ENGLISH)).contains(lowerCaseSearch)) {
+                    if (meta.hasDisplayName()) {
+                        if (AdventureText.plain(meta.displayName()).toLowerCase(Locale.ENGLISH).contains(lowerCaseSearch)) {
                             result.add(auction);
                             return;
                         }

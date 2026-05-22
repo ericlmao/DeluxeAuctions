@@ -7,7 +7,9 @@ import me.sedattr.deluxeauctions.DeluxeAuctions;
 import me.sedattr.deluxeauctions.managers.*;
 import me.sedattr.deluxeauctions.menus.AuctionsMenu;
 import me.sedattr.deluxeauctions.menus.MainMenu;
+import me.sedattr.deluxeauctions.others.AdventureText;
 import me.sedattr.deluxeauctions.others.Utils;
+import net.kyori.adventure.text.Component;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.bukkit.configuration.ConfigurationSection;
@@ -219,11 +221,11 @@ public class AuctionHook {
 
         String displayName = itemSection.getString("name");
         if (displayName != null && meta.hasDisplayName())
-            meta.setDisplayName(Utils.colorize(displayName
-                    .replace("%item_name%", meta.getDisplayName())));
+            meta.displayName(AdventureText.component(displayName
+                    .replace("%item_name%", AdventureText.legacy(meta.displayName()))));
 
         List<String> lore = itemSection.getStringList("lore");
-        List<String> newLore = new ArrayList<>();
+        List<Component> newLore = new ArrayList<>();
         String sellerName = auction.getAuctionOwnerName() != null ? auction.getAuctionOwnerName() : "";
         String sellerDisplayName = auction.getAuctionOwnerDisplayName() != null ? auction.getAuctionOwnerDisplayName() : sellerName;
         String buyerName = highestBid != null && highestBid.getBidOwnerName() != null ? highestBid.getBidOwnerName() : "";
@@ -231,15 +233,14 @@ public class AuctionHook {
         if (!lore.isEmpty())
             for (String line : lore) {
                 if (line.contains("%item_lore%")) {
-                    List<String> itemLore = meta.getLore();
+                    List<Component> itemLore = meta.lore();
                     if (itemLore != null && !itemLore.isEmpty())
-                        for (String itemLine : itemLore)
-                            newLore.add(Utils.colorize(itemLine));
+                        newLore.addAll(itemLore);
 
                     continue;
                 }
 
-                newLore.add(Utils.colorize(line
+                newLore.add(AdventureText.component(line
                         .replace("%bid_amount%", String.valueOf(auction.getAuctionBids().getPlayerBids().size()))
                         .replace("%bid_price%", auction.getEconomy().getText().replace("%price%", highestBid != null ? DeluxeAuctions.getInstance().numberFormat.format(highestBid.getBidPrice()) : ""))
                         .replace("%bidder_displayname%", buyerDisplayName)
@@ -253,7 +254,7 @@ public class AuctionHook {
                 ));
             }
 
-        meta.setLore(newLore);
+        meta.lore(newLore);
 
         List<String> flags = DeluxeAuctions.getInstance().configFile.getStringList("settings.auction_flags");
         if (!flags.isEmpty()) {

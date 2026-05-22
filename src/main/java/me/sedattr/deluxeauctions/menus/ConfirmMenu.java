@@ -8,6 +8,7 @@ import me.sedattr.deluxeauctions.inventoryapi.HInventory;
 import me.sedattr.deluxeauctions.inventoryapi.item.ClickableItem;
 import me.sedattr.deluxeauctions.managers.*;
 import me.sedattr.deluxeauctions.others.PlaceholderUtil;
+import me.sedattr.deluxeauctions.others.TaskUtils;
 import me.sedattr.deluxeauctions.others.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -69,7 +70,7 @@ public class ConfirmMenu {
                         else
                             new NormalViewMenu(this.player, auction).open("auctions");
                     }
-                    case "confirm_auction" -> player.closeInventory();
+                    case "confirm_auction" -> TaskUtils.run(player, player::closeInventory);
                     case "confirm_bid" -> new NormalViewMenu(this.player, auction).open("auctions");
                 }
             }));
@@ -114,7 +115,7 @@ public class ConfirmMenu {
                 placeholderUtil
                         .addPlaceholder("%auction_type%", playerAuction.getCreateType().name())
                         .addPlaceholder("%player_name%", this.player.getName())
-                        .addPlaceholder("%player_displayname%", this.player.getDisplayName());
+                        .addPlaceholder("%player_displayname%", Utils.getDisplayName(this.player));
 
                 switch (type) {
                     case "confirm_auction" -> {
@@ -142,7 +143,7 @@ public class ConfirmMenu {
                         }
                     }
                     case "confirm_purchase" -> {
-                        this.player.closeInventory();
+                        TaskUtils.run(this.player, this.player::closeInventory);
 
                         boolean status = this.auction.purchase(this.player);
                         if (status) {
@@ -151,9 +152,9 @@ public class ConfirmMenu {
 
                             Player seller = Bukkit.getPlayer(this.auction.getAuctionOwner());
                             placeholderUtil
-                                    .addPlaceholder("%buyer_displayname%", this.player.getDisplayName())
+                                    .addPlaceholder("%buyer_displayname%", Utils.getDisplayName(this.player))
                                     .addPlaceholder("%buyer_name%", this.player.getName())
-                                    .addPlaceholder("%seller_displayname%", seller != null ? seller.getDisplayName() : this.auction.getAuctionOwnerDisplayName())
+                                    .addPlaceholder("%seller_displayname%", seller != null ? Utils.getDisplayName(seller) : this.auction.getAuctionOwnerDisplayName())
                                     .addPlaceholder("%seller_name%", this.auction.getAuctionOwnerName());
 
                             if (seller != null) {
@@ -183,7 +184,7 @@ public class ConfirmMenu {
 
                             placeholderUtil
                                     .addPlaceholder("%bidder_name%", this.player.getName())
-                                    .addPlaceholder("%bidder_displayname%", this.player.getDisplayName())
+                                    .addPlaceholder("%bidder_displayname%", Utils.getDisplayName(this.player))
                                     .addPlaceholder("%auction_uuid%", String.valueOf(this.auction.getAuctionUUID()));
 
                             for (PlayerBid playerBid : this.auction.getAuctionBids().getHighestPlayerBids()) {

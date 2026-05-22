@@ -3,7 +3,6 @@ package me.sedattr.deluxeauctions.inventoryapi.inventory;
 import lombok.Getter;
 import me.sedattr.deluxeauctions.inventoryapi.HInventory;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.plugin.Plugin;
@@ -61,7 +60,7 @@ public class InventoryAPI {
         }
 
         public HInventory create() {
-            return new HInventory(ChatColor.translateAlternateColorCodes('&', this.title), this.inventoryType, this.size, this.id, this.closeable);
+            return new HInventory(this.title, this.inventoryType, this.size, this.id, this.closeable);
         }
     }
 }
