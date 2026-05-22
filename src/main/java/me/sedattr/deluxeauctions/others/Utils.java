@@ -474,13 +474,6 @@ public class Utils {
         if (object instanceof ItemStack)
             return (ItemStack) object;
 
-        String ecoItems = section.getString("eco_items");
-        if (ecoItems != null && !ecoItems.isEmpty() && DeluxeAuctions.getInstance().ecoItemsAddon != null) {
-            ItemStack itemStack = DeluxeAuctions.getInstance().ecoItemsAddon.getEcoItem(ecoItems);
-            if (itemStack != null)
-                return itemStack;
-        }
-
         String materialName = section.getString("material");
         if (materialName == null)
             return null;

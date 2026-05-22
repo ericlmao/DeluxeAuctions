@@ -50,11 +50,6 @@ public class CategoryCache {
     }
     
     public static boolean isCustomItem(String item, ItemStack itemStack) {
-        if (DeluxeAuctions.getInstance().ecoItemsAddon != null) {
-            ItemStack ecoItem = DeluxeAuctions.getInstance().ecoItemsAddon.getEcoItem(item);
-            if (ecoItem != null && ecoItem.isSimilar(itemStack))
-                return true;
-        }
         if (itemStack == null)
             return false;
 
