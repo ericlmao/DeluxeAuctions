@@ -289,34 +289,6 @@ permissions:
     menu: "auctionadmin.menu"
     reload: "auctionadmin.reload"
 
-# PLUGIN COMMAND ARGS
-commands:
-  search:
-    - search
-  convert:
-    - convert
-  cancel:
-    - cancel
-  lock:
-    - lock
-  reload:
-    - reload
-  info:
-    - info
-  menu:
-    - open
-    - menu
-  sell:
-    - sell
-  auctions:
-    - auctions
-  view:
-    - view
-  manage:
-    - manage
-  bids:
-    - bids
-
 # MENU SOUNDS
 sounds:
   inventory_item_click: # When player clicks an item in his own inventory to select for the auctions, the plugin will play this sound.
