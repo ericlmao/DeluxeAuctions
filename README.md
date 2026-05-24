@@ -53,3 +53,7 @@ all driven from these files.
 ## License
 
 See `LICENSE`.
+
+## Attribution
+
+This project is based on the original DeluxeAuctions repository by Sedat Cakmak: https://github.com/sedatcakmak/DeluxeAuctions
