@@ -1,5 +1,8 @@
 # DeluxeAuctions
 
+> This is an ultra-performance fork of the original DeluxeAuctions project.
+> Builds of the plugin are available at https://ci.moonrise.gg/job/DeluxeAuctions/.
+
 A configurable auction-house plugin for Spigot, Paper and Folia servers,
 inspired by the auction houses found on popular skyblock servers.
 Players list items for sale or for bidding, browse open auctions, and
